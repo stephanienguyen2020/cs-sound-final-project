@@ -1,4 +1,7 @@
 ---
+title: "Pluck — Blog"
+permalink: /BLOG.html
+---
 
 ## A guitar is two things
 
