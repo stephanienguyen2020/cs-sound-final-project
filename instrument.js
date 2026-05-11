@@ -452,15 +452,17 @@ async function boot() {
 
   const instrument = new StringInstrument(audioContext);
 
-  // Reveal the stage *before* measuring the canvas, otherwise
-  // getBoundingClientRect() returns 0×0 and the visualizer never draws.
-  document.getElementById('startOverlay').hidden = true;
-  document.getElementById('stage').hidden = false;
+  // Browsers require a user gesture before audio can play. The UI is
+  // visible immediately, but the very first interaction also resumes
+  // the AudioContext if it started suspended.
+  const ensureRunning = () => {
+    if (audioContext.state === 'suspended') audioContext.resume();
+  };
 
   const keyboardEl = document.getElementById('keyboard');
   buildKeyboard(
     keyboardEl,
-    (midi) => { instrument.noteOn(midi); highlightKey(midi, true); },
+    (midi) => { ensureRunning(); instrument.noteOn(midi); highlightKey(midi, true); },
     (midi) => { instrument.noteOff(midi); highlightKey(midi, false); },
   );
 
@@ -472,6 +474,7 @@ async function boot() {
     if (midi === undefined) return;
     if (heldKeys.has(midi)) return;
     heldKeys.add(midi);
+    ensureRunning();
     instrument.noteOn(midi);
     highlightKey(midi, true);
   });
@@ -487,9 +490,6 @@ async function boot() {
   startVisualizer(document.getElementById('waveform'), instrument.analyser);
 }
 
-document.getElementById('startButton').addEventListener('click', () => {
-  boot().catch((err) => {
-    console.error(err);
-    alert('Could not start audio: ' + err.message);
-  });
+boot().catch((err) => {
+  console.error(err);
 });
