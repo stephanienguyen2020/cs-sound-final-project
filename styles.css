@@ -88,6 +88,32 @@ body::before {
   text-transform: lowercase;
 }
 
+.site-nav {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.site-nav-link {
+  color: var(--brass);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(212, 162, 84, 0.25);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.site-nav-link:hover,
+.site-nav-link:focus-visible {
+  color: var(--brass-glow);
+  border-bottom-color: var(--brass-glow);
+  outline: none;
+}
+.site-nav-sep {
+  color: var(--ink-2);
+}
+
 /* ── Start overlay ──────────────────────────────────────────────────── */
 .start-overlay {
   display: flex;
