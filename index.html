@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pluck — a Karplus-Strong instrument</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="scene">
+
+    <header class="masthead">
+      <h1 class="title">
+        <span class="title-word">Pluck</span>
+      </h1>
+      <p class="tagline">A Karplus-Strong instrument with procedural body resonance.</p>
+    </header>
+
+    <section class="start-overlay" id="startOverlay">
+      <button class="start-button" id="startButton">
+        <span class="start-label">Tune the strings</span>
+        <span class="start-hint">click to enable audio</span>
+      </button>
+    </section>
+
+    <main class="stage" id="stage" hidden>
+
+      <section class="panel visualizer-panel">
+        <div class="panel-legend"><span>Output</span><span>time domain</span></div>
+        <canvas class="waveform" id="waveform" aria-hidden="true"></canvas>
+      </section>
+
+      <section class="panel keyboard-panel" aria-label="Keyboard">
+        <div class="keyboard" id="keyboard"></div>
+      </section>
+
+      <section class="panel controls-panel">
+
+        <div class="knob-column">
+          <div class="knob-title">String</div>
+
+          <label class="knob">
+            <span class="knob-name">Sustain</span>
+            <input type="range" id="damping" min="0.85" max="0.9995" step="0.0005" value="0.996">
+            <span class="knob-readout" id="dampingReadout">0.9960</span>
+            <span class="knob-foot">loop gain</span>
+          </label>
+
+          <label class="knob">
+            <span class="knob-name">Brightness</span>
+            <input type="range" id="brightness" min="0.1" max="1.0" step="0.01" value="0.6">
+            <span class="knob-readout" id="brightnessReadout">0.60</span>
+            <span class="knob-foot">lowpass α</span>
+          </label>
+
+          <label class="knob">
+            <span class="knob-name">Pluck</span>
+            <input type="range" id="pluck" min="0.05" max="1.0" step="0.01" value="0.55">
+            <span class="knob-readout" id="pluckReadout">0.55</span>
+            <span class="knob-foot">attack hardness</span>
+          </label>
+        </div>
+
+        <div class="knob-column">
+          <div class="knob-title">Body</div>
+
+          <div class="body-options" id="bodyOptions"></div>
+
+          <label class="knob">
+            <span class="knob-name">Mix</span>
+            <input type="range" id="mix" min="0" max="1" step="0.01" value="0.55">
+            <span class="knob-readout" id="mixReadout">55%</span>
+            <span class="knob-foot">wet send</span>
+          </label>
+        </div>
+
+      </section>
+
+      <footer class="help">
+        <p>
+          Play with <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd>
+          (octave 3) &nbsp;/&nbsp;
+          <kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>I</kbd>
+          (octave 4). Sharps on the rows above. Or touch the keyboard.
+        </p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <script src="instrument.js" defer></script>
+</body>
+</html>

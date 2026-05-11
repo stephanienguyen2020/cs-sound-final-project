@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pluck — final project presentation</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="presentation.css" />
+  </head>
+  <body>
+    <main class="deck">
+      <!-- ─── 01 · TITLE ─────────────────────────────────────────────── -->
+      <section class="slide slide-title" data-slide="1">
+        <div class="slide-corner-tag">
+          COMS 3430 · Final Project · Spring 2026
+        </div>
+        <div class="title-stack">
+          <h1 class="title-mark">Pluck<span class="title-dot">.</span></h1>
+          <p class="title-sub">
+            A Karplus-Strong instrument with a&nbsp;procedurally-modeled body.
+          </p>
+          <div class="title-rule"></div>
+          <p class="title-byline">Tien Nguyen (tn2510)</p>
+        </div>
+      </section>
+
+      <!-- ─── 02 · THESIS ────────────────────────────────────────────── -->
+      <section class="slide slide-thesis" data-slide="2">
+        <p class="micro-label">The premise</p>
+        <blockquote class="big-quote">
+          A guitar is two things: a <em>string</em>, and a
+          <em>box around the string</em>.
+        </blockquote>
+        <p class="big-quote-follow">
+          Karplus-Strong gives us the string.
+          <span class="accent">Where's the box?</span>
+        </p>
+      </section>
+
+      <!-- ─── 03 · CONCEPT FROM CLASS ────────────────────────────────── -->
+      <section class="slide slide-concept" data-slide="3">
+        <header class="slide-head">
+          <span class="micro-label">01 · Concept from class</span>
+          <h2>Karplus-Strong is a circle.</h2>
+        </header>
+        <div class="concept-body">
+          <div class="concept-diagram" id="ksDiagram">
+            <!-- SVG injected by JS -->
+          </div>
+          <aside class="concept-notes">
+            <p>
+              A burst of filtered noise enters the delay line. Each sample is
+              read out, low-pass filtered, scaled by a damping coefficient, and
+              written back to the head of the buffer.
+            </p>
+            <p>Pitch comes for free from the buffer length:</p>
+            <p class="formula">f₀&nbsp;=&nbsp;sampleRate&nbsp;÷&nbsp;N</p>
+            <p>Decay is just loop gain. Brightness is the filter's α.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ─── 04 · TECHNIQUE FROM CLASS ──────────────────────────────── -->
+      <section class="slide slide-tech" data-slide="4">
+        <header class="slide-head">
+          <span class="micro-label">02 · Technique from class — sharpened</span>
+          <h2>The native <code>DelayNode</code> lies above 340&nbsp;Hz.</h2>
+        </header>
+        <div class="tech-body">
+          <div class="tech-math">
+            <p class="formula-line">DelayNode minimum delay</p>
+            <p class="formula">128 samples ÷ 44,100&nbsp;Hz ≈ 2.9&nbsp;ms</p>
+            <p class="formula-line">Highest reachable f₀</p>
+            <p class="formula">
+              1 ÷ 2.9&nbsp;ms ≈ <strong>344&nbsp;Hz</strong>
+              <span class="annot">(≈ F4)</span>
+            </p>
+            <p class="formula-aside">Above F4, every note drifts sharp.</p>
+          </div>
+          <div class="tech-code">
+            <div class="code-tag">worklet.js · process()</div>
+            <pre><span class="cm">// runs sample-by-sample on the audio thread</span>
+<span class="kw">const</span> current = delayLine[readIndex];
+lowpass = α * current + (<span class="num">1</span> - α) * lowpass;
+<span class="kw">const</span> feedback = lowpass * damping;
+
+channel[i] = current;
+delayLine[readIndex] = feedback;
+readIndex = (readIndex + <span class="num">1</span>) % bufferSize;</pre>
+          </div>
+        </div>
+        <p class="tech-conclusion">
+          → &nbsp;An <code>AudioWorklet</code> moves the loop into the audio
+          thread, at sample resolution. No more out-of-tune treble.
+        </p>
+      </section>
+
+      <!-- ─── 05 · NEW TECHNIQUE ─────────────────────────────────────── -->
+      <section class="slide slide-modal" data-slide="5">
+        <header class="slide-head">
+          <span class="micro-label">03 · Technique not from class</span>
+          <h2>We grow our own impulse response.</h2>
+        </header>
+        <p class="modal-intro">
+          A real guitar body is a coupled resonator with a small set of strong
+          vibrational modes. Each mode is, mathematically, just a decaying
+          sinusoid — so the impulse response is the sum:
+        </p>
+        <p class="formula formula-display">
+          ir(t) &nbsp;=&nbsp; Σᵢ&nbsp;&nbsp;aᵢ · e<sup
+            >−t&thinsp;/&thinsp;τᵢ</sup
+          >
+          · sin(2π&thinsp;fᵢ&thinsp;t)
+        </p>
+
+        <div class="modal-body">
+          <div class="modal-viz" id="modalViz"><!-- SVG injected by JS --></div>
+          <table class="modal-table">
+            <thead>
+              <tr>
+                <th>Hz</th>
+                <th>τ</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>100</td>
+                <td>0.55&thinsp;s</td>
+                <td>Helmholtz air mode (soundhole)</td>
+              </tr>
+              <tr>
+                <td>196</td>
+                <td>0.32&thinsp;s</td>
+                <td>T(1,1)₂ — top plate, coupled</td>
+              </tr>
+              <tr>
+                <td>285</td>
+                <td>0.24&thinsp;s</td>
+                <td>T(1,1)₃ — back plate, coupled</td>
+              </tr>
+              <tr>
+                <td>425</td>
+                <td>0.16&thinsp;s</td>
+                <td>upper top-plate mode</td>
+              </tr>
+              <tr>
+                <td>610</td>
+                <td>0.12&thinsp;s</td>
+                <td>upper coupled mode</td>
+              </tr>
+              <tr>
+                <td>880</td>
+                <td>0.09&thinsp;s</td>
+                <td>body brilliance</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="modal-foot">
+          No recorded samples shipped. The convolver eats this synthetic IR and
+          the string voice gets a guitar's body for free.
+        </p>
+      </section>
+
+      <!-- ─── 06 · ARCHITECTURE ──────────────────────────────────────── -->
+      <section class="slide slide-arch" data-slide="6">
+        <header class="slide-head">
+          <span class="micro-label">System overview</span>
+          <h2>From keypress to sound.</h2>
+        </header>
+        <div class="arch-body" id="archDiagram">
+          <!-- SVG injected by JS -->
+        </div>
+      </section>
+
+      <!-- ─── 07 · DEMO ──────────────────────────────────────────────── -->
+      <section class="slide slide-demo" data-slide="7">
+        <header class="demo-header">
+          <span class="micro-label">Live demo</span>
+          <h2>Try it.</h2>
+        </header>
+        <p class="demo-hint">
+          Click <em>Tune the strings</em> inside the frame. Then play with
+          <kbd>Q W E R T Y</kbd> or tap the keys. Try the body presets — same
+          string, different box.
+        </p>
+        <div class="demo-frame">
+          <iframe
+            src="index.html"
+            title="Pluck instrument"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="slide slide-extra" data-slide="8">
+        <header class="slide-head">
+          <h2>What I'm most proud of.</h2>
+        </header>
+        <ol class="extra-list">
+          <li>
+            <span class="extra-num">01</span>
+            <div>
+              <h3>Polyphony with self-terminating voices</h3>
+              <p>
+                Each <code>AudioWorkletNode</code> messages the main thread once
+                it has decayed below −66&nbsp;dB. The node is then disconnected
+                and garbage-collected. Hold ten notes; the graph stays clean.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="extra-num">02</span>
+            <div>
+              <h3>A/B between body presets</h3>
+              <p>
+                The same string voice runs through four different
+                procedurally-modeled bodies — guitar, koto-like, banjo-like,
+                raw. The body's contribution becomes audible by comparison.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="extra-num">03</span>
+            <div>
+              <h3>Mode data grounded in real acoustics</h3>
+              <p>
+                The guitar preset uses the documented Helmholtz, T(1,1)₂, and
+                T(1,1)₃ frequencies of a classical guitar body — not numbers
+                chosen by ear.
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <script src="presentation.js" defer></script>
+  </body>
+</html>
